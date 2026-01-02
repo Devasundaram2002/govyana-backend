@@ -12,24 +12,29 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    private final String FROM_EMAIL = "onboarding@resend.dev";
+    // 🔥 Must be SAME as MAIL_USERNAME (Gmail)
+    private final String FROM_EMAIL = "yourgmail@gmail.com";
 
-    // OTP mail
+    // OTP Mail
     public void sendOtp(String toEmail, String otp) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-            helper.setFrom(FROM_EMAIL);
+            helper.setFrom("GoVyana <" + FROM_EMAIL + ">");
             helper.setTo(toEmail);
             helper.setSubject("GoVyana - Password Reset OTP");
+
             helper.setText(
                     "Your OTP is: " + otp + "\n\n" +
                     "This OTP is valid for 5 minutes.\n\n" +
-                    "If you did not request this, please ignore."
+                    "If you did not request this, please ignore.\n\n" +
+                    "— Team GoVyana"
             );
 
             mailSender.send(message);
+            System.out.println("OTP email sent successfully to " + toEmail);
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to send OTP email");
@@ -42,7 +47,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-            helper.setFrom(FROM_EMAIL);
+            helper.setFrom("GoVyana <" + FROM_EMAIL + ">");
             helper.setTo(toEmail);
             helper.setSubject("Welcome to GoVyana ✈️");
 
@@ -57,6 +62,8 @@ public class EmailService {
             );
 
             mailSender.send(message);
+            System.out.println("Welcome email sent successfully to " + toEmail);
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to send Welcome email");
