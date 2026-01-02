@@ -17,7 +17,8 @@ public class UserService {
     @Autowired
     private EmailService emailService;
   
-
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     // REGISTER
     public String register(User user) {
 
@@ -46,8 +47,7 @@ public class UserService {
     }
 
     // LOGIN
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    
 
     public String login(LoginRequest req) {
 
