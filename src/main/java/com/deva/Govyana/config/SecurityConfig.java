@@ -17,14 +17,18 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            // VERY IMPORTANT
+            // CORS enable
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
+            // CSRF disable (API project)
             .csrf(csrf -> csrf.disable())
 
+            // Authorization
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/auth/**",
+                    "/forgot-password",
+                    "/reset-password",
                     "/error"
                 ).permitAll()
                 .anyRequest().permitAll()
@@ -38,17 +42,27 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
+        // ✅ Allowed Frontend Origins
         config.setAllowedOrigins(List.of(
                 "http://127.0.0.1:5501",
                 "http://localhost:5501",
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "https://govyana.netlify.app"   // 🔥 IMPORTANT
         ));
 
+        // ✅ Allowed HTTP methods
         config.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS"
         ));
 
+        // ✅ Allow all headers
         config.setAllowedHeaders(List.of("*"));
+
+        // ✅ Allow cookies / authorization headers
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
