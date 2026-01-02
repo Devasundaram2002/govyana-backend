@@ -6,18 +6,17 @@ import java.util.Optional;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import com.deva.Govyana.dto.LoginRequest;
 import com.deva.Govyana.dto.ResetPasswordRequest;
+import com.deva.Govyana.dto.VerifyOtpRequest;
 import com.deva.Govyana.model.User;
 import com.deva.Govyana.repository.UserRepository;
 import com.deva.Govyana.service.EmailService;
 import com.deva.Govyana.service.UserService;
-import com.deva.Govyana.dto.VerifyOtpRequest;
 
 @RestController
 @RequestMapping("/auth")
@@ -26,7 +25,7 @@ public class AuthController {
 
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private UserRepository userRepository;
 
@@ -36,45 +35,41 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // REGISTER
+    // ================= REGISTER =================
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
-
-        String result = userService.register(user);
-
-        if (result.equals("EMAIL_EXISTS")) {
-            return ResponseEntity.badRequest()
-                    .body("Email already exists");
+    public ResponseEntity<?> register(@RequestBody User user) {
+        try {
+            userService.register(user);
+            return ResponseEntity.ok("Registered successfully");
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("EMAIL_EXISTS")) {
+                return ResponseEntity.badRequest().body("Email already exists");
+            }
+            return ResponseEntity.internalServerError().body("Server error");
         }
-
-        return ResponseEntity.ok("Registered successfully");
     }
 
-    // LOGIN
+    // ================= LOGIN =================
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest request) {
-
         try {
             userService.login(request);
             return ResponseEntity.ok("Login success");
-
         } catch (RuntimeException e) {
 
             if (e.getMessage().equals("USER_NOT_FOUND")) {
-                return ResponseEntity.status(404)
-                        .body("User not registered");
+                return ResponseEntity.status(404).body("User not registered");
             }
 
             if (e.getMessage().equals("INVALID_PASSWORD")) {
-                return ResponseEntity.status(401)
-                        .body("Invalid email or password");
+                return ResponseEntity.status(401).body("Invalid email or password");
             }
 
-            return ResponseEntity.status(500)
-                    .body("Server error");
+            return ResponseEntity.internalServerError().body("Server error");
         }
     }
-    
+
+    // ================= FORGOT PASSWORD =================
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> req) {
 
@@ -84,32 +79,32 @@ public class AuthController {
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+
             String otp = String.valueOf(new Random().nextInt(900000) + 100000);
 
             user.setOtp(otp);
             user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
             userRepository.save(user);
 
+            // Send OTP Mail
             emailService.sendOtp(email, otp);
         }
 
+        // Security response (same message for all)
         return ResponseEntity.ok(
-            Map.of("message", "If this email exists, OTP has been sent")
+                Map.of("message", "If this email exists, OTP has been sent")
         );
     }
 
-   
+    // ================= VERIFY OTP =================
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest req) {
 
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getOtp() == null) {
-            return ResponseEntity.badRequest().body("OTP expired or not generated");
-        }
-
-        if (user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+        if (user.getOtp() == null ||
+            user.getOtpExpiry().isBefore(LocalDateTime.now())) {
             return ResponseEntity.badRequest().body("OTP expired");
         }
 
@@ -117,9 +112,15 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Invalid OTP");
         }
 
+        // Clear OTP after success
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+        userRepository.save(user);
+
         return ResponseEntity.ok("OTP verified successfully");
     }
-    
+
+    // ================= RESET PASSWORD =================
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(
             @RequestBody ResetPasswordRequest request) {
@@ -132,7 +133,4 @@ public class AuthController {
 
         return ResponseEntity.ok("Password reset successful");
     }
-
-
 }
-

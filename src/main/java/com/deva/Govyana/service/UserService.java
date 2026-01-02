@@ -14,18 +14,35 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private EmailService emailService;
   
 
     // REGISTER
     public String register(User user) {
 
+        // 1️⃣ Email already exists check
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            return "EMAIL_EXISTS";
+            return "Email already registered";
         }
 
+        // 2️⃣ Encrypt password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-        return "SUCCESS";
+
+        // 3️⃣ Clear OTP fields (register ku thevai illa)
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+
+        // 4️⃣ Save user to DB
+        User savedUser = userRepository.save(user);
+
+        // 5️⃣ Send Welcome Mail
+        emailService.sendWelcomeMail(
+                savedUser.getEmail(),
+                savedUser.getFullName()
+        );
+
+        return "User registered successfully";
     }
 
     // LOGIN
