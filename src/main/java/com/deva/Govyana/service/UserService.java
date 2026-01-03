@@ -15,51 +15,29 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
-    private EmailService emailService;
-  
-    @Autowired
     private PasswordEncoder passwordEncoder;
-    // REGISTER
-    public String register(User user) {
 
-        // 1️⃣ Email already exists check
+    // REGISTER
+    public void register(User user) {
+
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            return "Email already registered";
+            throw new RuntimeException("EMAIL_EXISTS");
         }
 
-        // 2️⃣ Encrypt password
+        // encrypt password
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // 3️⃣ Clear OTP fields (register ku thevai illa)
-        user.setOtp(null);
-        user.setOtpExpiry(null);
-
-        // 4️⃣ Save user to DB
-        User savedUser = userRepository.save(user);
-
-        // 5️⃣ Send Welcome Mail
-        emailService.sendWelcomeMail(
-                savedUser.getEmail(),
-                savedUser.getFullName()
-        );
-
-        return "User registered successfully";
+        userRepository.save(user);
     }
 
     // LOGIN
-    
-
-    public String login(LoginRequest req) {
+    public void login(LoginRequest req) {
 
         User user = userRepository.findByEmail(req.getEmail())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND"));
 
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+            throw new RuntimeException("INVALID_PASSWORD");
         }
-
-        return "Login success";
     }
-
-
 }
