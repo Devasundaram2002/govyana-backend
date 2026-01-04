@@ -42,7 +42,7 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ Only allow Netlify + local dev
+    
         config.setAllowedOrigins(List.of(
                 "https://govyana.netlify.app",
                 "http://127.0.0.1:5501",
@@ -55,7 +55,7 @@ public class SecurityConfig {
 
         config.setAllowedHeaders(List.of("*"));
 
-        // ❌ MUST BE FALSE for Netlify
+        
         config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source =
