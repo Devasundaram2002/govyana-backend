@@ -42,28 +42,21 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ Allowed Frontend Origins
+        // ✅ Only allow Netlify + local dev
         config.setAllowedOrigins(List.of(
+                "https://govyana.netlify.app",
                 "http://127.0.0.1:5501",
-                "http://localhost:5501",
-                "http://localhost:3000",
-                "https://govyana.netlify.app"   // 🔥 IMPORTANT
+                "http://localhost:5501"
         ));
 
-        // ✅ Allowed HTTP methods
         config.setAllowedMethods(List.of(
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "OPTIONS"
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"
         ));
 
-        // ✅ Allow all headers
         config.setAllowedHeaders(List.of("*"));
 
-        // ✅ Allow cookies / authorization headers
-        config.setAllowCredentials(true);
+        // ❌ MUST BE FALSE for Netlify
+        config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
@@ -71,4 +64,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
 }
